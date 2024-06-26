@@ -2,10 +2,12 @@
 
 class My_Plugin_API {
     private $api_url = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
-    private $api_key = 'AIzaSyDZnj8x8_qyItpDBWmR51hHfy0eKww29GI'; 
 
     public function get_page_speed_details($url) {
-        $api_endpoint = "{$this->api_url}?url=" . urlencode($url) . "&key={$this->api_key}&strategy=desktop";
+        $api_key = get_option('pad_api_key'); // Fetch API key from the options
+        $strategy = 'desktop'; // Define the strategy as desktop
+        $api_endpoint = "{$this->api_url}?url=" . urlencode($url) . "&key={$api_key}&strategy={$strategy}";
+        
         $response = wp_remote_get($api_endpoint, [
             'timeout' => 120, // Set timeout to 120 seconds
         ]);
@@ -161,3 +163,4 @@ class My_Plugin_API {
         return round($bytes, $precision) . ' ' . $units[$pow];
     }
 }
+?>
