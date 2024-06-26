@@ -1,1 +1,1 @@
-WordPress to run some general diagnostics and checks for optimization
+WordPress plugin to run some general diagnostics and checks for optimization
