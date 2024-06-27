@@ -181,22 +181,23 @@ function get_known_bots_info() {
             $file = fopen($log_file, 'r');
             if ($file) {
                 while (($line = fgets($file)) !== false) {
-                    // Check for 'compatible' bots
-                    if (strpos($line, 'compatible') !== false) {
-                        if (preg_match('/compatible;([^;]*)/', $line, $matches)) {
-                            $bot_name = trim(explode('/', $matches[1])[0]);
-                            if (!isset($compatible_bots[$bot_name])) {
-                                $compatible_bots[$bot_name] = 0;
+                    // Extract the user agent part of the log line
+                    if (preg_match('/"[^"]*" "([^"]*)"/', $line, $matches)) {
+                        $user_agent = $matches[1];
+
+                        // Check for 'compatible' bots
+                        if (strpos($user_agent, 'compatible') !== false) {
+                            if (preg_match('/compatible;([^;]*)/', $user_agent, $matches)) {
+                                $bot_name = trim(explode('/', $matches[1])[0]);
+                                if (!isset($compatible_bots[$bot_name])) {
+                                    $compatible_bots[$bot_name] = 0;
+                                }
+                                $compatible_bots[$bot_name]++;
                             }
-                            $compatible_bots[$bot_name]++;
-                        }
-                    } else {
-                        // Check for other bots
-                        if (preg_match('/bot|crawl|spider|slurp|archiver|seek|extract|search|tracker|find|survey/i', $line)) {
-                            if (preg_match('/"([^"]+)"/', $line, $matches)) {
-                                $agent_details = $matches[1];
-                                // Additional processing to clean up agent string if necessary
-                                $agent_cleaned = preg_replace('/Mozilla\/[^\s]+|AppleWebKit\/[^\s]+|Chrome\/[^\s]+|Safari\/[^\s]+|Version\/[^\s]+|Mobile\/[^\s]+|Gecko\/[^\s]+|Firefox\/[^\s]+|Edg\/[^\s]+|SamsungBrowser\/[^\s]+|CriOS\/[^\s]+|GSA\/[^\s]+/', '', $agent_details);
+                        } else {
+                            // Check for other bots
+                            if (preg_match('/bot|crawl|spider|slurp|archiver|seek|extract|search|tracker|find|survey/i', $user_agent)) {
+                                $agent_cleaned = preg_replace('/Mozilla\/[^\s]+|AppleWebKit\/[^\s]+|Chrome\/[^\s]+|Safari\/[^\s]+|Version\/[^\s]+|Mobile\/[^\s]+|Gecko\/[^\s]+|Firefox\/[^\s]+|Edg\/[^\s]+|SamsungBrowser\/[^\s]+|CriOS\/[^\s]+|GSA\/[^\s]+/', '', $user_agent);
                                 $agent_cleaned = trim($agent_cleaned);
                                 if (!isset($other_bots[$agent_cleaned])) {
                                     $other_bots[$agent_cleaned] = 0;
@@ -210,6 +211,12 @@ function get_known_bots_info() {
             }
         }
     }
+
+    // Limit to top 10 bots
+    arsort($compatible_bots);
+    arsort($other_bots);
+    $compatible_bots = array_slice($compatible_bots, 0, 10, true);
+    $other_bots = array_slice($other_bots, 0, 10, true);
 
     if (empty($compatible_bots)) {
         $compatible_bots = ["None found" => 0];
@@ -243,4 +250,7 @@ function get_known_bots_info() {
         ]
     ];
 }
+
+
+
 ?>
