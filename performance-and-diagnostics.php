@@ -43,13 +43,14 @@ function wpqr_site_health_lighthouse_button() {
     }
 }
 
-// Enqueue styles for the Lighthouse report
-function enqueue_lighthouse_styles() {
-    if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'lighthouse-report.php') !== false) {
-        wp_enqueue_style('lighthouse-report-style', plugin_dir_url(__FILE__) . 'style.css');
+// Enqueue styles for the Lighthouse report and clipboard script
+function enqueue_lighthouse_styles_and_scripts() {
+    if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'site-health.php') !== false) {
+        //wp_enqueue_style('lighthouse-report-style', plugin_dir_url(__FILE__) . 'style.css');
+        wp_enqueue_script('clipboard-copy-script', plugin_dir_url(__FILE__) . 'includes/clipboard-copy.js', array(), '1.0', true);
     }
 }
-add_action('wp_enqueue_scripts', 'enqueue_lighthouse_styles');
+add_action('admin_enqueue_scripts', 'enqueue_lighthouse_styles_and_scripts');
 
 // Add settings menu item
 function pad_settings_menu() {
@@ -162,15 +163,17 @@ function wpqr_site_health_tab_content($tab) {
     echo '<h3 class="health-check-accordion-heading"><button aria-expanded="false" class="health-check-accordion-trigger" aria-controls="health-check-accordion-block-dns" type="button"><span class="title">Server IP & DNS</span><span class="icon"></span></button></h3>';
     echo '<div id="health-check-accordion-block-dns" class="health-check-accordion-panel" hidden>';
 
+    echo '<div class="copy-content" id="dns-copy-content">'; 
     $dns = get_dns();
     foreach ($dns->sections as $section) {
-        echo '<h4>'.$section['name'].'</h4>';
+        //echo '<h4>'.$section['name'].'</h4>';
         echo '<table class="wp-list-table widefat fixed striped">';
         echo '<thead><tr>';
         foreach (array_keys($section['data'][0]) as $header) {
             echo '<th>'.$header.'</th>';
         }
         echo '</tr></thead>';
+        echo '<tbody>';
         foreach ($section['data'] as $table) {
             echo '<tr>';
             foreach ($table as $row) {
@@ -178,63 +181,78 @@ function wpqr_site_health_tab_content($tab) {
             }
             echo '</tr>';
         }
+        echo '</tbody>';
         echo '</table>';
+        echo '<br>'; 
     }
+
+    echo '</div>'; 
+    echo '<button class="copy-btn" data-target="#dns-copy-content">Copy to Clipboard</button>';
     echo '</div>';
 
     // Memory and Uptime
     echo '<h3 class="health-check-accordion-heading"><button aria-expanded="false" class="health-check-accordion-trigger" aria-controls="health-check-accordion-block-memory-uptime" type="button"><span class="title">Server Uptime & RAM Usage</span><span class="icon"></span></button></h3>';
     echo '<div id="health-check-accordion-block-memory-uptime" class="health-check-accordion-panel" hidden>';
 
+    echo '<div class="copy-content" id="memory-uptime-copy-content">'; 
     $memory_and_uptime = get_memory_and_uptime();
     foreach ($memory_and_uptime->sections as $section) {
-        echo '<h4>'.$section['name'].'</h4>';
+        //echo '<h4>'.$section['name'].'</h4>';
         echo '<table class="wp-list-table widefat fixed striped">';
-        echo '<thead><tr>';
-        foreach (array_keys($section['data'][0]) as $header) {
-            echo '<th>'.$header.'</th>';
-        }
-        echo '</tr></thead>';
+        echo '<tbody>';
         foreach ($section['data'] as $table) {
-            echo '<tr>';
-            foreach ($table as $row) {
-                echo '<td>'.$row.'</td>';
+            foreach ($table as $key => $value) {
+                echo '<tr>';
+                echo '<td><strong>'.esc_html($key).'</strong></td>';
+                echo '<td>'.esc_html($value).'</td>';
+                echo '</tr>';
             }
-            echo '</tr>';
         }
+        echo '</tbody>';
         echo '</table>';
+        echo '<br>';
     }
+
+    echo '</div>'; 
+    echo '<button class="copy-btn" data-target="#memory-uptime-copy-content">Copy to Clipboard</button>';
     echo '</div>';
+
+
 
     // PHP and OPcache Info
     echo '<h3 class="health-check-accordion-heading"><button aria-expanded="false" class="health-check-accordion-trigger" aria-controls="health-check-accordion-block-php-opcache" type="button"><span class="title">PHP & OPcache Info</span><span class="icon"></span></button></h3>';
     echo '<div id="health-check-accordion-block-php-opcache" class="health-check-accordion-panel" hidden>';
 
+    echo '<div class="copy-content" id="php-opcache-copy-content">'; 
     $php_and_opcache = get_php_and_opcache_info();
 
     foreach ($php_and_opcache->sections as $section) {
-        echo '<h4>'.$section->name.'</h4>';
+        //echo '<h4>'.$section->name.'</h4>';
         echo '<table class="wp-list-table widefat fixed striped">';
         echo '<tbody>';
         foreach ($section->data as $key => $value) {
             echo '<tr>';
-            echo '<td>'.$key.'</td>';
+            echo '<td><strong>'.$key.'</strong></td>';
             echo '<td>'.$value.'</td>';
             echo '</tr>';
         }
         echo '</tbody>';
         echo '</table>';
+        echo '<br>';
     }
 
+    echo '</div>'; 
+    echo '<button class="copy-btn" data-target="#php-opcache-copy-content">Copy to Clipboard</button>';
     echo '</div>';
     
     // Core, Plugins & Themes Info
     echo '<h3 class="health-check-accordion-heading"><button aria-expanded="false" class="health-check-accordion-trigger" aria-controls="health-check-accordion-block-core-plugins-themes" type="button"><span class="title">Available Updates For Active Core/Plugins/Theme</span><span class="icon"></span></button></h3>';
     echo '<div id="health-check-accordion-block-core-plugins-themes" class="health-check-accordion-panel" hidden>';
 
+    echo '<div class="copy-content" id="core-plugins-themes-copy-content">'; 
     $core_plugins_themes_info = get_wordpress_core_plugins_themes_info();
     foreach ($core_plugins_themes_info->sections as $section) {
-        echo '<h4>'.$section->name.'</h4>';
+        //echo '<h4>'.$section->name.'</h4>';
         echo '<table class="wp-list-table widefat fixed striped">';
         echo '<thead><tr>';
         foreach (array_keys((array)$section->data[0]) as $header) {
@@ -251,17 +269,21 @@ function wpqr_site_health_tab_content($tab) {
         }
         echo '</tbody>';
         echo '</table>';
+        echo '<br>';
     }
 
+    echo '</div>'; 
+    echo '<button class="copy-btn" data-target="#core-plugins-themes-copy-content">Copy to Clipboard</button>';
     echo '</div>';
 
     // Database Details
     echo '<h3 class="health-check-accordion-heading"><button aria-expanded="false" class="health-check-accordion-trigger" aria-controls="health-check-accordion-block-database-details" type="button"><span class="title">Database Details</span><span class="icon"></span></button></h3>';
     echo '<div id="health-check-accordion-block-database-details" class="health-check-accordion-panel" hidden>';
 
+    echo '<div class="copy-content" id="database-details-copy-content">'; 
     $database_details = get_database_details();
     foreach ($database_details->sections as $section) {
-        echo '<h4>'.$section->name.'</h4>';
+        //echo '<h4>'.$section->name.'</h4>';
         echo '<table class="wp-list-table widefat fixed striped">';
         echo '<thead><tr>';
         foreach (array_keys((array)$section->data[0]) as $header) {
@@ -278,7 +300,11 @@ function wpqr_site_health_tab_content($tab) {
         }
         echo '</tbody>';
         echo '</table>';
+        echo '<br>';
     }
+
+    echo '</div>'; 
+    echo '<button class="copy-btn" data-target="#database-details-copy-content">Copy to Clipboard</button>';
     echo '</div>';
 
     // Access Log Details
@@ -288,10 +314,11 @@ function wpqr_site_health_tab_content($tab) {
     if (!are_log_paths_set()) {
         echo '<div class="notice notice-warning"><p>' . __('Please set the log paths in the Performance & Diagnostics settings before proceeding.', 'textdomain') . '</p></div>';
     } else {
+        echo '<div class="copy-content" id="accesslog-details-copy-content">'; 
         // HTTP Requests
         $http_requests_info = get_http_requests_info();
         foreach ($http_requests_info->sections as $section) {
-            echo '<h4>'.$section->name.'</h4>';
+            //echo '<h4>'.$section->name.'</h4>';
             echo '<table class="wp-list-table widefat fixed striped">';
             echo '<thead><tr>';
             foreach (array_keys((array)$section->data[0]) as $header) {
@@ -308,12 +335,13 @@ function wpqr_site_health_tab_content($tab) {
             }
             echo '</tbody>';
             echo '</table>';
+            echo '<br>';
         }
 
         // Most Requested Files and IPs
         $most_requested_info = get_most_requested_info();
         foreach ($most_requested_info->sections as $section) {
-            echo '<h4>'.$section->name.'</h4>';
+            //echo '<h4>'.$section->name.'</h4>';
             echo '<table class="wp-list-table widefat fixed striped">';
             echo '<thead><tr>';
             foreach (array_keys((array)$section->data[0]) as $header) {
@@ -330,12 +358,13 @@ function wpqr_site_health_tab_content($tab) {
             }
             echo '</tbody>';
             echo '</table>';
+            echo '<br>';
         }
 
         // Most Requested Pages
         $most_requested_pages_info = get_most_requested_pages_info();
         foreach ($most_requested_pages_info->sections as $section) {
-            echo '<h4>'.$section->name.'</h4>';
+            //echo '<h4>'.$section->name.'</h4>';
             echo '<table class="wp-list-table widefat fixed striped">';
             echo '<thead><tr>';
             foreach (array_keys((array)$section->data[0]) as $header) {
@@ -352,12 +381,13 @@ function wpqr_site_health_tab_content($tab) {
             }
             echo '</tbody>';
             echo '</table>';
+            echo '<br>';
         }
 
         // Known Bots Requesting the Site
         $known_bots_info = get_known_bots_info();
         foreach ($known_bots_info->sections as $section) {
-            echo '<h4>'.$section->name.'</h4>';
+            //echo '<h4>'.$section->name.'</h4>';
             echo '<table class="wp-list-table widefat fixed striped">';
             echo '<thead><tr>';
             foreach (array_keys((array)$section->data[0]) as $header) {
@@ -374,7 +404,11 @@ function wpqr_site_health_tab_content($tab) {
             }
             echo '</tbody>';
             echo '</table>';
+            echo '<br>';
         }
+
+        echo '</div>'; 
+        echo '<button class="copy-btn" data-target="#accesslog-details-copy-content">Copy to Clipboard</button>';
     }
 
     echo '</div>';
@@ -383,10 +417,11 @@ function wpqr_site_health_tab_content($tab) {
     if (is_dreampress_server()) {
         echo '<h3 class="health-check-accordion-heading"><button aria-expanded="false" class="health-check-accordion-trigger" aria-controls="health-check-accordion-block-cache" type="button"><span class="title">DreamPress Cache Details</span><span class="icon"></span></button></h3>';
         echo '<div id="health-check-accordion-block-cache" class="health-check-accordion-panel" hidden>';
-    
+
+        echo '<div class="copy-content" id="cache-details-copy-content">';     
         $cache_ratios_info = get_nginx_cache_ratios_info();
         foreach ($cache_ratios_info->sections as $section) {
-            echo '<h4>' . $section->name . '</h4>';
+            //echo '<h4>' . $section->name . '</h4>';
             echo '<table class="wp-list-table widefat fixed striped">';
             echo '<thead><tr>';
             foreach ($section->headers as $header) {
@@ -403,8 +438,11 @@ function wpqr_site_health_tab_content($tab) {
             }
             echo '</tbody>';
             echo '</table>';
+            echo '<br>';
         }
-    
+
+        echo '</div>'; 
+        echo '<button class="copy-btn" data-target="#cache-details-copy-content">Copy to Clipboard</button>';
         echo '</div>';
     } 
     
@@ -412,9 +450,10 @@ function wpqr_site_health_tab_content($tab) {
     echo '<h3 class="health-check-accordion-heading"><button aria-expanded="false" class="health-check-accordion-trigger" aria-controls="health-check-accordion-block-curl-results" type="button"><span class="title">cURL Results</span><span class="icon"></span></button></h3>';
     echo '<div id="health-check-accordion-block-curl-results" class="health-check-accordion-panel" hidden>';
 
+    echo '<div class="copy-content" id="curl-results-copy-content">'; 
     $curl_results_info = get_curl_results_info();
     foreach ($curl_results_info->sections as $section) {
-        echo '<h4>'.esc_html($section->name).'</h4>';
+        //echo '<h4>'.esc_html($section->name).'</h4>';
         echo '<table class="wp-list-table widefat fixed">';
         echo '<tbody>';
         foreach ($section->data as $row) {
@@ -424,12 +463,18 @@ function wpqr_site_health_tab_content($tab) {
         }
         echo '</tbody>';
         echo '</table>';
+        echo '<br>';
     }
+
+    echo '</div>'; 
+    echo '<button class="copy-btn" data-target="#curl-results-copy-content">Copy to Clipboard</button>';
     echo '</div>';
 
     // Cronjobs Scheduled Events
     echo '<h3 class="health-check-accordion-heading"><button aria-expanded="false" class="health-check-accordion-trigger" aria-controls="health-check-accordion-block-cronjobs" type="button"><span class="title">Cronjobs Scheduled Events</span><span class="icon"></span></button></h3>';
     echo '<div id="health-check-accordion-block-cronjobs" class="health-check-accordion-panel" hidden>';
+
+    echo '<div class="copy-content" id="cronjobs-copy-content">'; 
 
     $cronjobs_info = get_cron_events_info();
     foreach ($cronjobs_info->sections as $section) {
@@ -453,14 +498,19 @@ function wpqr_site_health_tab_content($tab) {
         echo '</tbody>';
         echo '</table>';
         echo '</div>'; 
-        echo '</div>'; 
+        echo '</div>';
     }
+
+    echo '</div>'; 
+    echo '<br>';
+    echo '<button class="copy-btn" data-target="#cronjobs-copy-content">Copy to Clipboard</button>';
     echo '</div>';
 
     // Error Logs Section
     echo '<h3 class="health-check-accordion-heading"><button aria-expanded="false" class="health-check-accordion-trigger" aria-controls="health-check-accordion-block-error-logs" type="button"><span class="title">Last 50 lines of Error Logs</span><span class="icon"></span></button></h3>';
     echo '<div id="health-check-accordion-block-error-logs" class="health-check-accordion-panel" hidden>';
 
+    echo '<div class="copy-content" id="error-logs-copy-content">'; 
     $error_logs_info = get_last_50_lines_of_error_logs();
     foreach ($error_logs_info->sections as $section) {
         echo '<div class="error-log-section">';
@@ -469,8 +519,11 @@ function wpqr_site_health_tab_content($tab) {
         echo '<textarea readonly class="error-log-textarea">'.esc_html($section->data).'</textarea>';
         echo '</div>';
         echo '</div>';
+        echo '<br>';
     }
 
+    echo '</div>'; 
+    echo '<button class="copy-btn" data-target="#error-logs-copy-content">Copy to Clipboard</button>';
     echo '</div>';
 
     // Add the CSS for the .error-log-section
