@@ -1,11 +1,12 @@
 <?php
 // Include the WordPress environment
-require_once(dirname(__FILE__) . '/../../../wp-load.php');
+require_once dirname(__FILE__) . '/../../../wp-load.php';
 
 // Get the site URL
 $url = get_site_url();
 
-function display_lighthouse_report() {
+function display_lighthouse_report()
+{
     $api = new My_Plugin_API();
     $details = $api->get_page_speed_details(get_site_url()); // Use the site's URL
 
@@ -131,7 +132,7 @@ function display_lighthouse_report() {
 </head>
 <body>
     <div class="container">
-        <?php display_lighthouse_report(); ?>
+        <?php display_lighthouse_report();?>
         <div id="copy-message" class="copy-message">Copied!</div>
     </div>
     <script>
