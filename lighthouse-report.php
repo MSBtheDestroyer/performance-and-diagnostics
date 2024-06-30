@@ -1,12 +1,11 @@
 <?php
 // Include the WordPress environment
-require_once dirname(__FILE__) . '/../../../wp-load.php';
+require_once(dirname(__FILE__) . '/../../../wp-load.php');
 
 // Get the site URL
 $url = get_site_url();
 
-function display_lighthouse_report()
-{
+function display_lighthouse_report() {
     $api = new My_Plugin_API();
     $details = $api->get_page_speed_details(get_site_url()); // Use the site's URL
 
@@ -14,9 +13,8 @@ function display_lighthouse_report()
     echo '<h1>Google PageSpeed Insights Report</h1>';
 
     if ($details) {
-        echo '<div class="copy-content" id="lighthouse-copy-content">'; // Wrapper for the content to be copied
-
         echo '<h2>Page Speed Details (Home Page)</h2>';
+        echo '<div class="copy-content" id="lighthouse-report-content">';
         echo '<table>';
         echo '<thead><tr><th>Metric</th><th>Value</th><th>Description</th></tr></thead>';
         echo '<tbody>';
@@ -60,10 +58,9 @@ function display_lighthouse_report()
         }
         echo '</tbody>';
         echo '</table>';
+        echo '</div>'; // End of copy-content
 
-        echo '</div>'; // End of wrapper
-
-        echo '<button class="copy-btn" data-target="#lighthouse-copy-content">Copy to Clipboard</button>';
+        echo '<button class="copy-btn" data-target="#lighthouse-report-content">Copy to Clipboard</button>';
     } else {
         echo 'Failed to retrieve optimization details.';
     }
@@ -123,74 +120,12 @@ function display_lighthouse_report()
         a:hover {
             text-decoration: underline;
         }
-        .copy-message {
-            display: none;
-            color: green;
-            margin-left: 10px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <?php display_lighthouse_report();?>
-        <div id="copy-message" class="copy-message">Copied!</div>
+        <?php display_lighthouse_report(); ?>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.copy-btn').forEach(function(button) {
-                button.addEventListener('click', function() {
-                    var targetSelector = button.getAttribute('data-target');
-                    var targetElement = document.querySelector(targetSelector);
-
-                    if (!targetElement) {
-                        alert('Target content not found');
-                        return;
-                    }
-
-                    // Clone the target element to avoid modifying the original content
-                    var clonedElement = targetElement.cloneNode(true);
-
-                    // Remove the copy button from the cloned content
-                    clonedElement.querySelectorAll('.copy-btn').forEach(btn => btn.remove());
-
-                    var content = getTextContent(clonedElement).trim(); // Get only text content without the button
-                    copyToClipboard(content);
-
-                    var copyMessage = document.getElementById('copy-message');
-                    copyMessage.style.display = 'inline';
-                    setTimeout(function() {
-                        copyMessage.style.display = 'none';
-                    }, 2000);
-                });
-            });
-        });
-
-        function getTextContent(element) {
-            var text = '';
-            element.childNodes.forEach(function(node) {
-                if (node.nodeType === Node.TEXT_NODE) {
-                    text += node.textContent.trim() + '\n';
-                } else if (node.nodeType === Node.ELEMENT_NODE) {
-                    if (node.tagName === 'H3' || node.tagName === 'H4') {
-                        text += '\n' + getTextContent(node).trim() + '\n';
-                    } else if (node.tagName === 'TABLE') {
-                        text += '\n' + getTextContent(node).trim() + '\n';
-                    } else {
-                        text += getTextContent(node).trim() + '\n';
-                    }
-                }
-            });
-            return text;
-        }
-
-        function copyToClipboard(text) {
-            var textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-        }
-    </script>
+    <script src="<?php echo plugin_dir_url(__FILE__) . 'includes/clipboard-copy.js'; ?>"></script>
 </body>
 </html>
