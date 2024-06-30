@@ -28,14 +28,29 @@ function getTextContent(element) {
         if (node.nodeType === Node.TEXT_NODE) {
             text += node.textContent.trim() + '\n';
         } else if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.tagName === 'H3' || node.tagName === 'H4' || node.tagName === 'TABLE') {
+            if (node.tagName === 'H3' || node.tagName === 'H4') {
                 text += '\n' + getTextContent(node).trim() + '\n';
+            } else if (node.tagName === 'TABLE') {
+                text += getTableText(node).trim() + '\n';
             } else {
                 text += getTextContent(node).trim() + '\n';
             }
         }
     });
     return text.replace(/\n{2,}/g, '\n\n'); // Replace multiple newlines with a single newline
+}
+
+function getTableText(table) {
+    var rows = table.querySelectorAll('tr');
+    var tableText = '';
+    rows.forEach(function(row) {
+        var cells = row.querySelectorAll('th, td');
+        cells.forEach(function(cell, index) {
+            tableText += (index > 0 ? '\t' : '') + cell.textContent.trim();
+        });
+        tableText += '\n';
+    });
+    return tableText;
 }
 
 function copyToClipboard(text) {
