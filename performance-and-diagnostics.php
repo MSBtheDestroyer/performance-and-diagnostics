@@ -180,6 +180,12 @@ function wpqr_site_health_tab_content($tab)
     if ('wpqr-site-health-tab' !== $tab) {return;}
 
     echo '<div class="health-check-body">';
+    echo '<style> 
+        .copy-button-margin {
+            margin-bottom: 10px; /* Adjust the value as needed */
+        }
+    </style>';
+    echo '<button id="copy-entire-report" type="button" class="copy-button-margin"><span class="title">Copy Entire Report to Clipboard</span></button>';
     echo '<div class="health-check-accordion">';
 
     // DNS Lookup
