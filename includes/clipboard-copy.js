@@ -20,6 +20,21 @@ document.addEventListener('DOMContentLoaded', function() {
             showCopiedMessage(button); // Show "Copied!" message
         });
     });
+
+    // Add event listener for "Copy Entire Report to Clipboard" button
+    var copyEntireReportButton = document.getElementById('copy-entire-report');
+    if (copyEntireReportButton) {
+        copyEntireReportButton.addEventListener('click', function() {
+            var entireReportContent = '';
+            document.querySelectorAll('.copy-content').forEach(function(section) {
+                var clonedSection = section.cloneNode(true);
+                clonedSection.querySelectorAll('.copy-btn').forEach(btn => btn.remove());
+                entireReportContent += getTextContent(clonedSection).trim() + '\n\n';
+            });
+            copyToClipboard(entireReportContent.trim());
+            showCopiedMessage(copyEntireReportButton); // Show "Copied!" message
+        });
+    }
 });
 
 function getTextContent(element) {
